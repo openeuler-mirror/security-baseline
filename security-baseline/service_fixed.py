@@ -402,3 +402,25 @@ class SYSLOG(BaseFix): # 配置系统日志到路径
         if log3!=[] and '/var/log/secure' not in log3[0]:
             return False
         return True
+
+
+class RSYSLOG(BaseFix): #设置远程log的存放
+    def __init__(self):
+        super().__init__()
+        self.id = 12
+        self.path='/etc/rsyslog.conf'
+        self.description='远程日志设定'
+
+    def run(self):
+        remove_line('@192.168.0.1',self.path)
+        append_line("*.*    @192.168.0.1",self.path)
+        run_shell('systemctl restart rsyslog')
+
+    def recovery(self):
+        remove_line('@192.168.0.1',self.path)
+        run_shell('systemctl restart rsyslog')
+
+    def check(self): #直接加固即可
+        self.run()
+        return True
+
