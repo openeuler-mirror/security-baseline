@@ -1,7 +1,21 @@
+workspace
+repo.openeuler.org
+BUILD
+BUILDROOT
+RPMS
+SRPMS
+back
+*.squashfs
+python3env
+#ctyunostools-0.1.tar.gz
+
+
+
+#python ignore
 __pycache__/
 *.py[cod]
 *$py.class
-
+*.tar.gz
 .idea
 .idea/*
 venv/
@@ -10,5 +24,3 @@ venv/
 *.bat
 *.json
 *.sqlite
-*.tar.gz
-

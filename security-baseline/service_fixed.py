@@ -315,7 +315,8 @@ class disable_ftp_anonymous_user(BaseFix): #禁止匿名账户登录ftp
             if 'passwd' in path:
                 comment_out_line(path, "ftp:x", "#")
             else:
-                replace_line(path, "anonymous_enabl", "anonymous_enable=NO")
+                if "vsftpd.conf" in path:
+                    replace_line(path, "anonymous_enabl", "anonymous_enable=NO")
                 if path=="/etc/ftpusers":
                     replace_line(path, "root", "root") #确保root可使用不能使用
             os.system("systemctl restart vsftpd")
@@ -343,6 +344,9 @@ class disable_ftp_anonymous_user(BaseFix): #禁止匿名账户登录ftp
         for p in self.path:
             if os.path.exists(os.path.join(backup_path,p.split('/')[-1]+'_initialbak')):
                 cp_file(os.path.join(backup_path,p.split('/')[-1]+'_initialbak'),p)
+            else:
+                if "vsftpd.conf" in path:
+                    replace_line(path, "anonymous_enabl", "anonymous_enable=YES")
         os.system("systemctl restart vsftpd")
 
     def check(self):#暂时不检
