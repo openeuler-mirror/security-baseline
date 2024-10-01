@@ -231,3 +231,25 @@ class CHECK_ICMP(BaseFix): #禁止响应ping，避免被扫描发现
                 return True
             else:
                 return False
+
+
+class DELETE_KEYWORD(BaseFix): #删除带有特定记录的log，防止因log泄漏被恶意利用
+    def __init__(self):
+        super().__init__()
+        self.id = 26
+        self.path ='/var/log/messages'
+        self.description='删除带有特定记录的log'
+
+    def run(self):
+        remove_line('virtio',self.path)
+        remove_line('kvm', self.path)
+        remove_line('KVM', self.path)
+        remove_line('Cloud', self.path)
+        remove_line('cloudw', self.path)
+
+    def check(self):
+        flag=grep_find('virtio',self.path )+grep_find('kvm',self.path)+grep_find('KVM',self.path)+grep_find('cloud',self.path)+grep_find('cloudw',self.path)
+        if flag==[]:
+            return True
+        else:
+            return False
