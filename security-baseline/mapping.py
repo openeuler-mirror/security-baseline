@@ -1,4 +1,4 @@
-#功能映射模块，实现自动映射加固项和编号
+#功能映射模块,实现自动映射加固项和编号
 from account_fixed import *
 from service_fixed import *
 import account_fixed
@@ -18,3 +18,4 @@ def catch_items():
         fix_items[fix_item.id]=[fix_item,item]
     fix_items=dict(sorted(fix_items.items(), key=lambda x: x[0]))
     return fix_items
+
