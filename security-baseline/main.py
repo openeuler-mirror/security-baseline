@@ -5,7 +5,7 @@
 
 import argparse
 from mapping import catch_items
-from base_function import print_line,cprint
+from base_function import print_config,print_desc,print_line,cprint
 
 
 
@@ -29,6 +29,14 @@ def run(items,config):
         for key in items.keys():
             if fix_things == [] or key in fix_things:
                 items[key][0].backup()
+    elif mode=='recovery':
+        print('执行加固项数值修复')
+        print_line()
+        for key in items.keys():
+            if fix_things == [] or key in fix_things:
+                items[key][0].recovery()
+                print('修复编号为', items[key][0].id, '的加固项')
+        print_line()
     elif mode=='check':
         print('执行加固状态检测')
         print_line()
@@ -41,6 +49,19 @@ def run(items,config):
                     print('满足加固需求。')
                 else:
                     cprint('注意：该加固项检测未通过。','red')
+    elif mode=='reset':
+        print('执行加固操作文件还原')
+        print_line()
+        for key in items.keys():
+            if fix_things == [] or key in fix_things:
+                items[key][0].reset()
+        print('已完成，加固操作文件还原。')
+    else:
+        print('展示加固相关设置和内容')
+        print_config(config)
+        print_desc(fixed_items)
+       #只显示加固项内容
+
 
 
 if __name__ == '__main__':
@@ -50,3 +71,8 @@ if __name__ == '__main__':
     parser.add_argument('--backup_path', dest='backup_path', type=str, help='用于设置备份的路径', default="/etc/._initialbak/")
 
     config=parser.parse_args()
+    fixed_items= catch_items()
+    fixed_ids=list(fixed_items.keys())
+    run(fixed_items,config)
+
+    #if config.mode=='fix':
