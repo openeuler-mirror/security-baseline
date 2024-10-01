@@ -158,3 +158,34 @@ class SSH_PORT(BaseFix): #ssh端口修改为非22号端口
             return True
         else:
             return False
+
+
+class DEL_DANGER_FILE(BaseFix): #删除对系统安全构成威胁的文件
+    def __init__(self):
+        super().__init__()
+        self.id = 24
+        self.description='删除对.netrc，.rhosts的文件'
+
+    def run(self):
+        run_shell('find / -type f -name ".netrc"  2>/dev/null | xargs rm -f')
+        run_shell('find / -type f -name ".rhosts" 2>/dev/null | xargs rm -f')
+
+    def reset(self):
+        if reset_file(Initial_dir, self.path):
+            pass
+        else:
+            self.recovery()
+
+    def recovery(self):
+        pass
+
+    def check(self):
+        flag=True
+        if int(run_shell('find / -type f -name ".netrc" 2>/dev/null | wc -l',False)[0])!=0:
+            print ('存在.netrc类型的风险文件，需删除！')
+            flag=False
+        if int(run_shell('find / -type f -name ".rhosts" 2>/dev/null | wc -l',False)[0])!=0:
+            print ('存在.rhosts类型的风险文件，需删除！')
+            flag=False
+        return flag
+
