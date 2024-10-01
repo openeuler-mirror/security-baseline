@@ -216,3 +216,35 @@ class SET_CRACK(BaseFix): #设置密码组成限制，difok新密码必须和旧
             flag=False
         return flag
 
+
+class LOGIN_USER_FALSE(BaseFix): #设定密码输入的情况下锁定账户,输入错误3次后，root锁定5分钟，其他用户锁定3分钟
+    def __init__(self):
+        super().__init__()
+        self.id = 6
+        self.path = "/etc/pam.d/system-auth"
+        self.line = 'auth        required      pam_faillock.so preauth audit deny=3  unlock_time=180 even_deny_root root_unlock_time=300'
+        self.description='密码输入错误锁定账户的设定'
+
+    def run(self):
+        flag=grep_find('^auth        required      pam_faillock.so', self.path)
+        if flag !=[]: #若检测到满足的行，直接替换后取值即可
+            sed_repalce(flag[0], self.line, self.path) #核实credit
+        else: #若检测不到，则添加需求的行
+            append_line(self.line,self.path)
+
+    def recovery(self):
+        flag = grep_find('^auth        required      pam_faillock.so', self.path)
+        if flag != []:  # 若检测到满足的行，直接替换后取值即可
+            sed_repalce(flag[0],
+                        'auth        required      pam_faillock.so preauth audit deny=6  unlock_time=180 even_deny_root root_unlock_time=300',
+                        self.path)  # 核实credit
+        else:  # 若检测不到，则添加需求的行
+            append_line(
+                'auth        required      pam_faillock.so preauth audit deny=6 unlock_time=180 even_deny_root root_unlock_time=300',
+                self.path)
+
+    def check(self):
+        flag=True
+        if grep_find('^auth        required      pam_faillock.so preauth audit deny=3  unlock_time=180 even_deny_root root_unlock_time=300', self.path)==[]:
+            flag=False
+        return flag
