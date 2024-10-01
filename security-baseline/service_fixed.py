@@ -189,3 +189,30 @@ class REBUILD_FILE(BaseFix): #修改密码相关限制，1.密码最长有效天
             flag=False
         return flag
 
+
+class SET_CRACK(BaseFix): #设置密码组成限制，difok新密码必须和旧密码3位不同，密码组成必须有大小写字母，数字，特殊符号
+    def __init__(self):
+        super().__init__()
+        self.id = 5
+        self.path="/etc/pam.d/system-auth"
+        self.description='用户密码组成相关设定'
+
+    def run(self):
+        flag=grep_find('^password    requisite     pam_cracklib.so', self.path)
+        if flag !=[]: #若检测到满足的行，直接替换后取值即可
+            sed_repalce(flag[0], 'password    requisite     pam_cracklib.so difok=3 dcredit=-1 lcredit=-1 ucredit=-1 credit=-1', self.path) #核实credit
+        else: #若检测不到，则添加需求的行
+            append_line('password    requisite     pam_cracklib.so difok=3 dcredit=-1 lcredit=-1 ucredit=-1 credit=-1',self.path)
+
+    def reset(self):
+        if reset_file(Initial_dir, self.path):
+            pass
+        else:
+            self.recovery()
+
+    def check(self):
+        flag=True
+        if grep_find('^password    requisite     pam_cracklib.so difok=3 dcredit=-1 lcredit=-1 ucredit=-1 credit=-1', self.path)==[]:
+            flag=False
+        return flag
+
