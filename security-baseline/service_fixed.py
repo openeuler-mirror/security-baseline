@@ -486,3 +486,41 @@ class ADD_SECURE(BaseFix): #添加安全账户，用于系统安全管理
             command='rm -rf '+UserName
             run_shell(command,False)
 
+
+class SU_WHEEL(BaseFix): #限制部分用户不能使用su
+    def __init__(self):
+        super().__init__()
+        self.id = 14
+        self.path='/etc/pam.d/su'
+        self.description='su权限的设定'
+
+    def run(self):
+        if os.path.exists(self.path):
+            Strand = 'auth sufficient /lib/security/pam_rootok.so'
+            StrandNum = len(grep_find(Strand, self.path))
+            if StrandNum < 1:
+                append_line(Strand, self.path)
+            Strand = 'auth required pam_wheel.so group=wheel'
+            StrandNum =len(grep_find( Strand,self.path))
+            if StrandNum<1:
+                append_line(Strand,self.path)
+
+
+    def recovery(self):
+        remove_line('auth sufficient /lib/security/pam_rootok.so',self.path)
+        remove_line('auth required pam_wheel.so group=wheel',self.path)
+
+    def check(self):
+        flag1=False
+        flag2=False
+        if os.path.exists(self.path):
+            Strand = 'auth required pam_wheel.so group=wheel'
+            StrandNum =len(grep_find( Strand,self.path))
+            if StrandNum>=1:
+                flag1=True
+            Strand = 'auth sufficient /lib/security/pam_rootok.so'
+            StrandNum = len(grep_find(Strand, self.path))
+            if StrandNum >= 1:
+                flag2 = True
+        return flag1 and flag2
+
