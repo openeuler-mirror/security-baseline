@@ -26,3 +26,25 @@ class TELENT(BaseFix): #关闭telent安装openssh
         Ssh_num=run_shell('rpm -qa|grep openssh|wc -l')
         if int(Ssh_num[0])<=3:
             run_shell('yum -y install openssh &>/dev/null')
+
+    def reset(self):
+        if reset_file(Initial_dir, self.path):
+            pass
+
+    def recovery(self):
+        reset_file(Initial_dir, self.path)
+        if os.path.exists(self.path):
+            sed_repalce('yes','disable',self.path)
+        run_shell('service xinetd restart &>/dev/null')
+
+    def check(self):
+        if not os.path.exists(self.path):
+            return True
+        flags = grep_find('^disable', self.path)
+        if flags==[]:
+            return False
+        else:
+            if 'yes' in flags[-1]:
+                return True
+            else:
+                return False
