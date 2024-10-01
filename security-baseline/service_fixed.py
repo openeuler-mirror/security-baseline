@@ -319,7 +319,7 @@ class disable_ftp_anonymous_user(BaseFix): #禁止匿名账户登录ftp
                     replace_line(path, "anonymous_enabl", "anonymous_enable=NO")
                 if path=="/etc/ftpusers":
                     replace_line(path, "root", "root") #确保root可使用不能使用
-            os.system("systemctl restart vsftpd")
+            os.system("systemctl restart vsftpd >/dev/null 2>&1")
 
                 
     def backup(self,show=False,force=True,backup_path=Initial_dir): #对操作文件进行备份
@@ -336,21 +336,26 @@ class disable_ftp_anonymous_user(BaseFix): #禁止匿名账户登录ftp
                 pass
             else:
                 flag+=1
+            if "vsftpd.conf" in self.path:
+                    replace_line(self.path, "anonymous_enabl", "anonymous_enable=YES")
         if flag>1:
             self.recovery(backup_path=Initial_dir)
-        os.system("systemctl restart vsftpd")
+        os.system("systemctl restart vsftpd >/dev/null 2>&1")
 
     def recovery(self,backup_path=Initial_dir):
         for p in self.path:
             if os.path.exists(os.path.join(backup_path,p.split('/')[-1]+'_initialbak')):
                 cp_file(os.path.join(backup_path,p.split('/')[-1]+'_initialbak'),p)
             else:
-                if "vsftpd.conf" in path:
-                    replace_line(path, "anonymous_enabl", "anonymous_enable=YES")
-        os.system("systemctl restart vsftpd")
+                if "vsftpd.conf" in self.path:
+                    replace_line(self.path, "anonymous_enabl", "anonymous_enable=YES")
+        os.system("systemctl restart vsftpd >/dev/null 2>&1")
 
     def check(self):#暂时不检
+        if run_shell("systemctl | grep vsftpd |wc -l",show_state=False)[0]=='0':
+            return True
         for file in self.path:
+            
             if "ftp" not in file:
                 continue
             else:
@@ -362,5 +367,4 @@ class disable_ftp_anonymous_user(BaseFix): #禁止匿名账户登录ftp
                         tmp_line=line.replace(" ","").replace("\n","")
                         if tmp_line=="anonymous_enable=NO":
                             return True
-
         return False
