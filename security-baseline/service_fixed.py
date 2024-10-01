@@ -253,3 +253,32 @@ class DELETE_KEYWORD(BaseFix): #删除带有特定记录的log，防止因log泄
             return True
         else:
             return False
+
+
+class del_banner(BaseFix): #会话界面的提醒字符段备份并删除，防止泄漏敏感信息，系统 Banner 设置
+    def __init__(self):
+        super().__init__()
+        self.id = 27
+        self.path =['/etc/issue','/etc/issue.net' ]
+        self.description='会话界面的提醒字符段备份并删除'
+
+    def run(self):
+        for p in self.path:
+            cp_file(p,p+'.bak')
+            rm_file(p)
+
+    def backup(self,show): #对操作文件进行备份
+        for file in self.path:
+            backup_file(Initial_dir,file)
+            if show:
+                print('加固项',self.id,'操作文件已备份。')
+
+    def reset(self):
+        flag = 0
+        for file in self.path:
+            if reset_file(Initial_dir, file):
+                pass
+            else:
+                flag+=1
+        if flag>1:
+            self.recovery()
