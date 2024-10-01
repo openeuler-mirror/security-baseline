@@ -4,6 +4,43 @@
 ###########################
 
 import argparse
+from mapping import catch_items
+from base_function import print_line,cprint
+
+
+
+
+
+def run(items,config):
+    mode=config.mode
+    fix_things=config.fixed_things
+    if mode=='fix':
+        print('执行系统加固')
+        print_line()
+        for key in items.keys():
+            if fix_things==[] or key in fix_things:
+                items[key][0].backup(False)
+                print('执行编号',items[key][0].id,'加固,内容为',items[key][0].description)
+                items[key][0].run()
+                print_line()
+    elif mode=='backup':
+        print('执行加固需操作文件备份')
+        print_line()
+        for key in items.keys():
+            if fix_things == [] or key in fix_things:
+                items[key][0].backup()
+    elif mode=='check':
+        print('执行加固状态检测')
+        print_line()
+        for key in items.keys():
+            if fix_things == [] or key in fix_things:
+                print_line()
+                print('检测加固项,编号',key,',名称：',items[key][0].description)
+                print_line(False)
+                if items[key][0].check():
+                    print('满足加固需求。')
+                else:
+                    cprint('注意：该加固项检测未通过。','red')
 
 
 if __name__ == '__main__':
