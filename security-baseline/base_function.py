@@ -16,14 +16,14 @@ class BaseFix():
     def run(self):
         pass
 
-    def backup(self,show=True,force=True,backup_path=Initial_dir):  # 对操作文件进行备份
+    def backup(self,show=True,force=False,backup_path=Initial_dir):  # 对操作文件进行备份
         if self.path!='' and os.path.exists(self.path):
             backup_file(backup_path, self.path,force)
             if show:
-                print('加固项',self.id,'操作文件已备份。')
+                print('加固项',self.id,'操作文件'+self.path+'已备份。')
         else:
             if show:
-                print('加固项',self.id,'无需备份！')
+                print('加固项',self.id,'无需备份(无操作文件或设置文件不存在)！')
 
     def reset(self,backup_path=Initial_dir):
         if self.path=='' or reset_file(Initial_dir, self.path):
@@ -63,11 +63,11 @@ def append_line(new_line,file): #向文件添加一行
     run_shell(command)
 
 def remove_line(line,file): #删除文件中有特定内容中的行
-    command='sed -i "/'+line+'/d" '+file
+    command='sed -i "/'+line+'/d" '+file +' &> /dev/null'
     run_shell(command)
 
 def cp_file(raw_path,new_path,show=True):
-    command=r'cp -p '+raw_path+' '+new_path +' &> /dev/null'
+    command=r'\cp -p '+raw_path+' '+new_path +' &> /dev/null'
     run_shell(command,show)
 
 def rm_file(raw_path,show=True):
@@ -90,18 +90,24 @@ def backup_file(Initial_dir,file,force=True):
     if not os.path.exists(os.path.join(Initial_dir, file.split('/')[-1] + '_initialbak')) and os.path.exists(file):
         cp_file(file, os.path.join(Initial_dir, file.split('/')[-1] + '_initialbak'))
     else:
+        if not os.path.exists(file):
+            return
         # 强制覆盖配置滚动保存，确保可回溯
         if force==True:
             md5num=set()
             if os.path.exists(os.path.join(Initial_dir, file.split('/')[-1] + '_initialbak')):
+                md5num.add(get_file_md5(os.path.join(Initial_dir, file.split('/')[-1] + '_initialbak')))
                 for i in range(10):
                     if not os.path.exists(os.path.join(Initial_dir, file.split('/')[-1] + '_initialbak.'+str(i))):
                         if get_file_md5(file) not in md5num:
                             cp_file(os.path.join(Initial_dir, file.split('/')[-1] + '_initialbak'),os.path.join(Initial_dir, file.split('/')[-1] + '_initialbak.'+str(i)))
+                            cp_file(file, os.path.join(Initial_dir, file.split('/')[-1] + '_initialbak'))
+
                         break
                     else:
-                        md5num.add(get_file_md5(os.path.join(Initial_dir, file.split('/')[-1] + '_initialbak')))
-            cp_file(file, os.path.join(Initial_dir, file.split('/')[-1] + '_initialbak'))
+                        md5num.add(get_file_md5(os.path.join(Initial_dir, file.split('/')[-1] + '_initialbak.'+str(i))))  
+            else:                                                                                                                                                                                                                  
+                cp_file(file, os.path.join(Initial_dir, file.split('/')[-1] + '_initialbak'))
 
 def reset_file(Initial_dir,file):
     if os.path.exists(os.path.join(Initial_dir, file.split('/')[-1] + '_initialbak')):
@@ -229,7 +235,7 @@ def check_file_permission(file_path,mode_code='644'):
     # 提取权限部分
     file_permission = oct(file_stat.st_mode)[-3:]
     # 检查是否为644
-    if file_permission == mode_code:
+    if file_permission <= mode_code:
         return True
     else:
         return False

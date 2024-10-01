@@ -23,7 +23,7 @@ def run(items,config):
         print_line()
         for key in items.keys():
             if fix_things==[] or key in fix_things:
-                items[key][0].backup(False)
+                items[key][0].backup(backup_path=backup_path,force=force,show=True)
                 print('执行编号',items[key][0].id,'加固,内容为',items[key][0].description)
                 items[key][0].run()
                 print_line()
@@ -32,7 +32,7 @@ def run(items,config):
         print_line()
         for key in items.keys():
             if fix_things == [] or key in fix_things:
-                items[key][0].backup(backup_path=backup_path,force=force)
+                items[key][0].backup(backup_path=backup_path,force=force,show=True)
     elif mode=='recovery':
         print('执行加固项数值修复')
         print_line()
@@ -83,7 +83,3 @@ if __name__ == '__main__':
     run(fixed_items,config)
 
     #if config.mode=='fix':
-
-
-
-
