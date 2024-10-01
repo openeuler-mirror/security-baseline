@@ -464,3 +464,25 @@ class ADD_SECURE(BaseFix): #添加安全账户，用于系统安全管理
             cp_file('/root/.ssh/id_dsa','/home/'+UserName+'/.ssh/id_dsa',False)
             command='chmod 600 /home/'+UserName+ '/.ssh/id_dsa && chown ' +UserName+'.'+UserName+' /home/' +UserName+'/.ssh/id_dsa'
             run_shell(command,False)
+
+    def check(self):
+        UserName = self.config.UserName
+        command = 'id ' + UserName + ' 2>/dev/null | wc -l'
+        num = run_shell(command,False)[0]
+        if num == '1' or num == 1:
+            flag = True
+            print('存在安全符合账户，账户名：', UserName)
+        else:
+            flag=False
+        return flag
+
+    def recovery(self):
+        UserName = self.config.UserName
+        command = 'userdel -fr ' + UserName +' 2>/dev/null'
+        run_shell(command, False)
+        SD_Z = UserName + "    ALL=(ALL)    NOPASSWD: ALL"
+        remove_line(SD_Z, self.path)
+        if os.path.exists('/home/' +UserName):
+            command='rm -rf '+UserName
+            run_shell(command,False)
+
