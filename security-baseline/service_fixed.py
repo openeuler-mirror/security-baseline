@@ -71,3 +71,22 @@ class ROOT_LOGIN(BaseFix): #限制root用户使用ssh登录
             pass
         else:
             self.recovery()
+
+    def recovery(self):
+        flags = grep_find('PermitRootLogin', self.path)
+        if flags != []:
+            for flag in flags:
+                if '#' != flag[0]:
+                    sed_repalce(flag, "PermitRootLogin yes", self.path)
+        else:
+            append_line("PermitRootLogin yes", self.path)
+
+    def check(self):
+        flags = grep_find('^PermitRootLogin', self.path)
+        if flags == []:
+            return False
+        else:
+            if 'yes' in flags[-1]:
+                return False
+            else:
+                return True
