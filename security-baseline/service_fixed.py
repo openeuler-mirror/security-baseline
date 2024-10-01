@@ -189,3 +189,25 @@ class DEL_DANGER_FILE(BaseFix): #删除对系统安全构成威胁的文件
             flag=False
         return flag
 
+
+class CHECK_ICMP(BaseFix): #禁止响应ping，避免被扫描发现
+    def __init__(self):
+        super().__init__()
+        self.id = 25
+        self.path='/etc/sysctl.conf'
+        self.description='禁止响应ping，避免被扫描发现'
+
+    def run(self):
+        Sysctl_Num=int(run_shell("grep '^net.ipv4.icmp_echo_ignore_all' "+self.path+"|wc -l")[0])
+        if Sysctl_Num>=1:
+            flag=0
+            Sysctl=grep_find('^net.ipv4.icmp_echo_ignore_all',self.path)
+            for ctl in Sysctl:
+                if flag==0:
+                    sed_repalce(ctl,'net.ipv4.icmp_echo_ignore_all = 1',self.path)
+                    flag=1
+                else:
+                    remove_line(ctl,self.path)
+        else:
+            append_line('net.ipv4.icmp_echo_ignore_all = 1',self.path)
+        run_shell('sysctl -p >/dev/null 2>&1',False)
