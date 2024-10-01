@@ -282,3 +282,14 @@ class del_banner(BaseFix): #会话界面的提醒字符段备份并删除，防�
                 flag+=1
         if flag>1:
             self.recovery()
+
+    def recovery(self):
+        for p in self.path:
+            if os.path.exists(p+'.bak'):
+                cp_file(p+'.bak',p)
+
+    def check(self):
+        for file in self.path:
+            if os.path.exists(file):
+                return False
+        return True
