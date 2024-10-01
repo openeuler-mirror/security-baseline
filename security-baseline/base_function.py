@@ -3,6 +3,7 @@ import shutil
 from do_shell import run_shell
 from config import fixed_config
 from prettytable import PrettyTable
+import hashlib
 config=fixed_config()
 Initial_dir=config.Initial_dir
 
@@ -15,7 +16,7 @@ class BaseFix():
     def run(self):
         pass
 
-    def backup(self,show=True,force=False,backup_path=Initial_dir):  # 对操作文件进行备份
+    def backup(self,show=True,force=True,backup_path=Initial_dir):  # 对操作文件进行备份
         if self.path!='' and os.path.exists(self.path):
             backup_file(backup_path, self.path,force)
             if show:
@@ -66,14 +67,24 @@ def remove_line(line,file): #删除文件中有特定内容中的行
     run_shell(command)
 
 def cp_file(raw_path,new_path,show=True):
-    command=r'cp -a '+raw_path+' '+new_path +' &> /dev/null'
+    command=r'cp -p '+raw_path+' '+new_path +' &> /dev/null'
     run_shell(command,show)
 
 def rm_file(raw_path,show=True):
     command = r'rm -f ' + raw_path+' &> /dev/null'
     run_shell(command,show)
 
-def backup_file(Initial_dir,file,force=False):
+def get_file_md5(file_name):
+    m = hashlib.md5()
+    with open(file_name, 'rb') as fp:
+        while True:
+            data = fp.read(4096)
+            if not data:
+                break
+            m.update(data)
+    return m.hexdigest()
+
+def backup_file(Initial_dir,file,force=True):
     if not os.path.exists(Initial_dir):
         os.mkdir(Initial_dir)
     if not os.path.exists(os.path.join(Initial_dir, file.split('/')[-1] + '_initialbak')) and os.path.exists(file):
@@ -81,14 +92,16 @@ def backup_file(Initial_dir,file,force=False):
     else:
         # 强制覆盖配置滚动保存，确保可回溯
         if force==True:
+            md5num=set()
             if os.path.exists(os.path.join(Initial_dir, file.split('/')[-1] + '_initialbak')):
                 for i in range(10):
                     if not os.path.exists(os.path.join(Initial_dir, file.split('/')[-1] + '_initialbak.'+str(i))):
-                        cp_file(os.path.join(Initial_dir, file.split('/')[-1] + '_initialbak'),os.path.join(Initial_dir, file.split('/')[-1] + '_initialbak.'+str(i)))
+                        if get_file_md5(file) not in md5num:
+                            cp_file(os.path.join(Initial_dir, file.split('/')[-1] + '_initialbak'),os.path.join(Initial_dir, file.split('/')[-1] + '_initialbak.'+str(i)))
                         break
+                    else:
+                        md5num.add(get_file_md5(os.path.join(Initial_dir, file.split('/')[-1] + '_initialbak')))
             cp_file(file, os.path.join(Initial_dir, file.split('/')[-1] + '_initialbak'))
-
-    
 
 def reset_file(Initial_dir,file):
     if os.path.exists(os.path.join(Initial_dir, file.split('/')[-1] + '_initialbak')):
