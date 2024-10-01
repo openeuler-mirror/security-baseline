@@ -78,6 +78,13 @@ class LOCKING_INVAILD_USER(BaseFix): #锁定无效账号
                 num=num[0].split(' ')[1]
                 if num!='LK':
                     return False
+        flags=grep_find('^INACTIVE',"/etc/default/useradd")[0]
+        if flags==[]:
+            pass
+        else:
+            flags=flags.split("=")[-1]
+        if flags!="0":
+            return False
         return flag
 
 class CHECK_UID_ZERO(BaseFix): #检测UID权限为0的账户,并删除
@@ -101,6 +108,15 @@ class CHECK_UID_ZERO(BaseFix): #检测UID权限为0的账户,并删除
             pass
         else:
             self.recovery(backup_path=backup_path)
+        UidZeroUser =split_file_by_line('/etc/passwd',":",'0',2,0)
+        if UidZeroUser!=[]:
+            for ZeroUser in UidZeroUser:
+                if ZeroUser=="root":
+                    continue
+                if not os.path.exists(os.path.join("/home/",ZeroUser)):
+                    os.mkdir(os.path.join("/home/",ZeroUser))
+                    run_shell("chown -R "+ZeroUser+" "+os.path.join("/home/",ZeroUser))
+                    run_shell("chmod 700 "+os.path.join("/home/",ZeroUser))
 
     def check(self):
         UidZeroUser = split_file_by_line('/etc/passwd', ":", '0', 2, 0)
@@ -199,9 +215,9 @@ class SET_CRACK(BaseFix): #设置密码组成限制,difok新密码必须和旧�
     def run(self):
         flag=grep_find('^password    requisite     pam_pwquality.so', self.path)
         if flag !=[]: #若检测到满足的行,直接替换后取值即可
-            sed_repalce(flag[0], 'password    requisite     pam_pwquality.so difok=3 dcredit=-1 lcredit=-1 ucredit=-1 credit=-1', self.path) #核实credit
+            sed_repalce(flag[0], 'password    requisite     pam_pwquality.so difok=3 dcredit=-1 lcredit=-1 ucredit=-1 ocredit=-1', self.path) #核实credit
         else: #若检测不到,则添加需求的行
-            append_line('password    requisite     pam_pwquality.so difok=3 dcredit=-1 lcredit=-1 ucredit=-1 credit=-1',self.path)
+            append_line('password    requisite     pam_pwquality.so difok=3 dcredit=-1 lcredit=-1 ucredit=-1 ocredit=-1',self.path)
 
     def reset(self,backup_path=Initial_dir):
         if reset_file(backup_path, self.path):
@@ -211,7 +227,7 @@ class SET_CRACK(BaseFix): #设置密码组成限制,difok新密码必须和旧�
 
     def check(self):
         flag=True
-        if grep_find('^password    requisite     pam_pwquality.so difok=3 dcredit=-1 lcredit=-1 ucredit=-1 credit=-1', self.path)==[]:
+        if grep_find('^password    requisite     pam_pwquality.so difok=3 dcredit=-1 lcredit=-1 ucredit=-1 ocredit=-1', self.path)==[]:
             flag=False
         return flag
 
@@ -386,9 +402,9 @@ class SYSLOG(BaseFix): # 配置系统日志到路径
         run_shell('systemctl restart rsyslog')
 
     def recovery(self,backup_path=Initial_dir):
-        remove_line('^*.err;kern.debug;daemon.notice',self.path)
-        remove_line('^cron.*', self.path)
-        remove_line("^authpriv.*",self.path)
+        comment_out_line(self.path,'*.err;kern.debug;daemon.notice',"#")
+        comment_out_line(self.path,'cron.*',"#")
+        comment_out_line(self.path,"authpriv.*","#")
         run_shell('systemctl restart rsyslog') #生效设置
 
     def check(self,backup_path=Initial_dir):
@@ -526,6 +542,3 @@ class SU_WHEEL(BaseFix): #限制部分用户不能使用su
             if StrandNum >= 1:
                 flag2 = True
         return flag1 and flag2
-
-
-
