@@ -424,3 +424,43 @@ class RSYSLOG(BaseFix): #设置远程log的存放
         self.run()
         return True
 
+
+class ADD_SECURE(BaseFix): #添加安全账户，用于系统安全管理
+    def __init__(self):
+        super().__init__()
+        self.id = 13
+        self.path='/etc/sudoers'
+        self.config=fixed_config()
+        self.description='添加用于安全管理的账户'
+
+    def run(self):
+        UserName=self.config.UserName
+        UserPass=self.config.UserPass
+        SecureNum=int(run_shell('id '+UserName+' 2>/dev/null|wc -l',False)[0])
+        if SecureNum!=1:
+            run_shell('useradd '+UserName)
+            command = 'echo ' + UserPass + ' | passwd --stdin ' + UserName+ ' &>/dev/null'
+            run_shell(command)
+        else:
+            command = 'echo ' + UserPass + ' | passwd --stdin ' + UserName+ ' &>/dev/null'
+            run_shell(command)
+
+         #添加安全账户到sudoer组，基于安全账户sudo权限
+        SD_Z = UserName+"    ALL=(ALL)    NOPASSWD: ALL"
+        remove_line(SD_Z,self.path)
+        append_line(SD_Z,self.path)
+    # 给安全账户ssh权限
+        command='mkdir -p /home/'+UserName+'/.ssh/ &&  chmod 700 /home/'+UserName+'/.ssh/'
+        run_shell(command)
+        if not os.path.exists('/home/'+UserName+'/.ssh/authorized_keys' ) and os.path.exists('/root/.ssh/authorized_keys'):
+            cp_file('/root/.ssh/authorized_keys','/home/'+UserName+'/.ssh/authorized_keys',False)
+            command='chmod 644 /home/'+UserName+ '/.ssh/authorized_keys && chown ' +UserName+'.'+UserName+' /home/' +UserName+'/.ssh/authorized_keys'
+            run_shell(command,False)
+        if not os.path.exists('/home/'+UserName+'/.ssh/id_rsa' ) and os.path.exists('/root/.ssh/id_rsa'):
+            cp_file('/root/.ssh/id_rsa','/home/'+UserName+'/.ssh/id_rsa',False)
+            command='chmod 600 /home/'+UserName+ '/.ssh/id_rsa && chown ' +UserName+'.'+UserName+' /home/' +UserName+'/.ssh/id_rsa'
+            run_shell(command,False)
+        if not os.path.exists('/home/'+UserName+'/.ssh/id_dsa' ) and os.path.exists('/root/.ssh/id_dsa'):
+            cp_file('/root/.ssh/id_dsa','/home/'+UserName+'/.ssh/id_dsa',False)
+            command='chmod 600 /home/'+UserName+ '/.ssh/id_dsa && chown ' +UserName+'.'+UserName+' /home/' +UserName+'/.ssh/id_dsa'
+            run_shell(command,False)
