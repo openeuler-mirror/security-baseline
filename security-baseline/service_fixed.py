@@ -248,3 +248,34 @@ class LOGIN_USER_FALSE(BaseFix): #设定密码输入的情况下锁定账户,输
         if grep_find('^auth        required      pam_faillock.so preauth audit deny=3  unlock_time=180 even_deny_root root_unlock_time=300', self.path)==[]:
             flag=False
         return flag
+
+
+class REBUILD_UMASK(BaseFix): #设置umask 027，表示默认创建新文件权限为750，也就是rxwr-x---(所有者全部权限，属组读写，其它人无)
+    def __init__(self):
+        super().__init__()
+        self.id = 7
+        self.path="/etc/profile"
+        self.description='umask设置用户文件权限'
+
+    def run(self):
+        flags = grep_find('^umask', self.path)
+        if flags != []:
+            for flag in flags:
+                sed_repalce(flag,'umask 027', self.path)
+        else:
+            append_line('umask 027',self.path)
+
+    def recovery(self):
+        flags = grep_find('^umask', self.path)
+        if flags != []:
+            for flag in flags:
+                sed_repalce(flag, 'umask 022', self.path)
+        else:
+            append_line('umask 022', self.path)
+
+    def check(self):
+        umasks= grep_find('^umask', self.path)
+        flag=False
+        if umasks!=[] and '027' in umasks[-1]:
+            flag=True
+        return flag
