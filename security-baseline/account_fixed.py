@@ -25,7 +25,7 @@ class CHECK_EMPTY_PASS(BaseFix):
         New_Pass = self.config.UserPass #'"1230"'
         Empty_Users=split_file_by_line(self.path,":","",1,0)   #Empty_User=(`awk -F ":" '( $2 == "" ) { print $1 }' /etc/shadow`)
         for Empty_User in Empty_Users:
-            command='echo "'+Empty_User+':'+New_Pass+'" | '+chpasswd
+            command='echo "'+Empty_User+':'+New_Pass+'" | chpasswd'
             run_shell(command,False)
 
     def reset(self,backup_path=Initial_dir):
@@ -40,7 +40,6 @@ class CHECK_EMPTY_PASS(BaseFix):
                 print('存在密码为空账户: ',Empty_User)
         return flag
 
-
 class LOCKING_INVAILD_USER(BaseFix): #锁定无效账号
     def __init__(self):
         super().__init__()
@@ -54,9 +53,9 @@ class LOCKING_INVAILD_USER(BaseFix): #锁定无效账号
             command = 'id ' + Lock_user + ' 2>/dev/null | wc -l'
             num = run_shell(command,False)[0]
             if num == '1' or num == 1:
-                
                 command = 'passwd -l ' + Lock_user + ' &>/dev/null'
                 run_shell(command,False)
+        sed_repalce(grep_find('^INACTIVE', "/etc/default/useradd")[0], 'INACTIVE=0', "/etc/default/useradd")
 
     def recovery(self,backup_path=''):  #对锁定的账户予以解封
         Lock_users = self.config.Lock_users
@@ -66,6 +65,7 @@ class LOCKING_INVAILD_USER(BaseFix): #锁定无效账号
             if num == '1' or num == 1:
                 command = 'passwd -u ' + Lock_user + ' &>/dev/null'
                 run_shell(command,False)
+        sed_repalce(grep_find('^INACTIVE', "/etc/default/useradd")[0], 'INACTIVE=-1', "/etc/default/useradd")
 
     def check(self):
         Lock_users = self.config.Lock_users
@@ -79,7 +79,6 @@ class LOCKING_INVAILD_USER(BaseFix): #锁定无效账号
                 if num!='LK':
                     return False
         return flag
-
 
 class CHECK_UID_ZERO(BaseFix): #检测UID权限为0的账户,并删除
     def __init__(self):
@@ -185,7 +184,7 @@ class REBUILD_FILE(BaseFix): #修改密码相关限制,1.密码最长有效天�
         print('密码最短长度：', PASS_MIN_LEN)
         print('密码最短修改频率：',PASS_MIN_DAYS)
         print('密码过期提醒天数：', PASS_WARN_AGE)
-        if PASS_MAX_DAYS>90 or ASS_MIN_LEN<8 or PASS_MIN_DAYS>1 or PASS_WARN_AGE<7:
+        if PASS_MAX_DAYS>90 or PASS_MIN_LEN<8 or PASS_MIN_DAYS>1 or PASS_WARN_AGE<7:
             flag=False
         return flag
 
@@ -447,12 +446,11 @@ class ADD_SECURE(BaseFix): #添加安全账户,用于系统安全管理
         else:
             command = 'echo ' + UserPass + ' | passwd --stdin ' + UserName+ ' &>/dev/null'
             run_shell(command)
-
-         #添加安全账户到sudoer组,基于安全账户sudo权限
+         # 添加安全账户到sudoer组,基于安全账户sudo权限
         SD_Z = UserName+"    ALL=(ALL)    NOPASSWD: ALL"
         remove_line(SD_Z,self.path)
         append_line(SD_Z,self.path)
-    # 给安全账户ssh权限
+        # 给安全账户ssh权限
         command='mkdir -p /home/'+UserName+'/.ssh/ &&  chmod 700 /home/'+UserName+'/.ssh/'
         run_shell(command)
         if not os.path.exists('/home/'+UserName+'/.ssh/authorized_keys' ) and os.path.exists('/root/.ssh/authorized_keys'):
@@ -511,7 +509,6 @@ class SU_WHEEL(BaseFix): #限制部分用户不能使用su
             if StrandNum<1:
                 append_line(Strand,self.path)
 
-
     def recovery(self,backup_path=Initial_dir):
         remove_line('auth sufficient pam_rootok.so',self.path)
         remove_line('auth required pam_wheel.so group=wheel',self.path)
@@ -529,5 +526,6 @@ class SU_WHEEL(BaseFix): #限制部分用户不能使用su
             if StrandNum >= 1:
                 flag2 = True
         return flag1 and flag2
+
 
 

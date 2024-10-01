@@ -1,8 +1,6 @@
 # !/usr/bin/python3
 ##
 # 系统安全检测加固工具 v1.0
-# 2022.11.25
-# 天翼云-基础架构-操作系统
 ###########################
 
 import argparse
@@ -58,9 +56,10 @@ def run(items,config):
     elif mode=='reset':
         print('执行加固操作文件还原')
         print_line()
-        for key in items.keys(backup_path=backup_path):
+        
+        for key in items.keys():
             if fix_things == [] or key in fix_things:
-                items[key][0].reset()
+                items[key][0].reset(backup_path=backup_path)
         print('已完成,加固操作文件还原。')
     else:
         print('展示加固相关设置和内容')
@@ -74,7 +73,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='系统加固检测工具,请输入需要执行的操作和操作内容')
     parser.add_argument('--mode', dest='mode', type=str, help='设定工具运行模式: 执行系统加固(fix),加固状态检测(check),修复(recovery)和加固文件备份(backup)', default='check')
     parser.add_argument('--opt', dest='fixed_things', nargs='+', type=int, help='加固或者修复的数据项', default=[])
-    parser.add_argument('--force', dest='force_backup', action="store_true", help='强制备份设置项', default=False)
+    parser.add_argument('--force', dest='force_backup', action="store_true", help='强制备份设置项', default=True)
     parser.add_argument('--backup_path', dest='backup_path', type=str, help='用于设置备份的路径', default="/etc/._initialbak/")
     parser.add_argument('--version', '-V',dest='need_version',action="store_true", help='版本号查询', default=False)
 
@@ -84,4 +83,7 @@ if __name__ == '__main__':
     run(fixed_items,config)
 
     #if config.mode=='fix':
+
+
+
 
