@@ -1,7 +1,11 @@
 # !/usr/bin/python3
-##
-# 系统安全检测加固工具 v1.0
-###########################
+"""
+ (c) 2024 - Copyright CTyunOS Inc
+
+ Authors:
+   wukaishun <wuksh@chinatelecom.cn>
+
+"""
 
 import argparse
 from mapping import catch_items

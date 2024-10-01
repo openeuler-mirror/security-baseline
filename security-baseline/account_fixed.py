@@ -1,3 +1,10 @@
+"""
+ (c) 2024 - Copyright CTyunOS Inc
+
+ Authors:
+   wukaishun <wuksh@chinatelecom.cn>
+
+"""
 # 账户加固相关项,编号从1开始
 
 #path

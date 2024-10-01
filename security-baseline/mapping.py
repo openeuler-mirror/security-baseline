@@ -1,3 +1,10 @@
+"""
+ (c) 2024 - Copyright CTyunOS Inc
+
+ Authors:
+   wukaishun <wuksh@chinatelecom.cn>
+
+"""
 #功能映射模块,实现自动映射加固项和编号
 from account_fixed import *
 from service_fixed import *

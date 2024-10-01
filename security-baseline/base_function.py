@@ -1,3 +1,10 @@
+"""
+ (c) 2024 - Copyright CTyunOS Inc
+
+ Authors:
+   wukaishun <wuksh@chinatelecom.cn>
+
+"""
 import os
 import shutil
 from do_shell import run_shell
