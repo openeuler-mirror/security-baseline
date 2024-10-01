@@ -1,3 +1,10 @@
+"""
+ (c) 2024 - Copyright CTyunOS Inc
+
+ Authors:
+   wukaishun <wuksh@chinatelecom.cn>
+
+"""
 
 class fixed_config():
     def __init__(self):

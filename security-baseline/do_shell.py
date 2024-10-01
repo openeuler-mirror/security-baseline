@@ -1,3 +1,10 @@
+"""
+ (c) 2024 - Copyright CTyunOS Inc
+
+ Authors:
+   wukaishun <wuksh@chinatelecom.cn>
+
+"""
 #提供python执行shell脚本的功能,并输出
 import subprocess
 import os
