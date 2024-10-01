@@ -279,3 +279,24 @@ class REBUILD_UMASK(BaseFix): #设置umask 027，表示默认创建新文件权�
         if umasks!=[] and '027' in umasks[-1]:
             flag=True
         return flag
+
+
+class CHECK_USER_FILE(BaseFix): #修改与账户信息相关的文件权限，防止被恶意复制篡改
+    def __init__(self):
+        super().__init__()
+        self.id = 8
+        self.description='重要用户信息文件权限'
+
+    def run(self):
+        commands=['chmod 600 /etc/shadow','chmod 644 /etc/group','chmod 644 /etc/passwd']
+        for command in commands:
+            run_shell(command)
+
+    def recovery(self): #不设置修复项目
+        commands = ['chmod 600 /etc/shadow', 'chmod 644 /etc/group', 'chmod 644 /etc/passwd']
+        for command in commands:
+            run_shell(command)
+
+    def check(self):
+        self.run()
+        return True
