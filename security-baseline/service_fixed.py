@@ -48,3 +48,26 @@ class TELENT(BaseFix): #关闭telent安装openssh
                 return True
             else:
                 return False
+
+
+class ROOT_LOGIN(BaseFix): #限制root用户使用ssh登录
+    def __init__(self):
+        super().__init__()
+        self.id = 22
+        self.path='/etc/ssh/sshd_config'
+        self.description='禁止root账户ssh登录'
+
+    def run(self):
+        flags=grep_find('PermitRootLogin',self.path)
+        if flags!=[]:
+            for flag in flags:
+                if '#'!=flag[0]:
+                    sed_repalce(flag,"PermitRootLogin no",self.path)
+        else:
+            append_line("PermitRootLogin no",self.path)
+
+    def reset(self):
+        if reset_file(Initial_dir, self.path):
+            pass
+        else:
+            self.recovery()
