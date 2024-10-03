@@ -131,3 +131,69 @@ def cprint(string,color):
         print("\033[34;1m"+string+"\033[0m")
     if color=='green':
         print("\033[36;1m"+string+"\033[0m")
+
+
+def replace_line(f, s, new_line):
+    # 检查目标文件不存在，则不做处理
+    if not os.path.exists(f):
+        return
+
+    # 备份
+    if not os.path.exists(f + '.bak'):
+        shutil.copyfile(f, f + '.bak')
+
+    # 记录权限
+    mode = os.stat(f).st_mode
+
+    # 修改权限
+    os.chmod(f, 0o755)
+
+    # 读取文件
+    fp = open(f, "rb")
+    lines = fp.readlines()
+    fp.close()
+
+    # 修改并写入文件
+    is_find = False
+    fp = open(f, "wb")
+    for line in lines:
+        if line.find(s) == 0:
+            is_find = True
+            fp.write(new_line + "\n")
+        else:
+            fp.write(line)
+    if is_find is False:
+        fp.write(new_line + "\n")
+    fp.close()
+
+    # 修改回权限
+    os.chmod(f, mode)
+
+
+def comment_out_line(f, s, comment_str):
+    # 检查目标文件不存在，则不做处理
+    if not os.path.exists(f):
+        return
+
+    # 记录权限
+    mode = os.stat(f).st_mode
+
+    # 修改权限
+    os.chmod(f, 0o755)
+
+    # 读取文件
+    fp = open(f, "rb")
+    lines = fp.readlines()
+    fp.close()
+
+    # 修改并写入文件
+    fp = open(f, "wb")
+    for line in lines:
+        if line.find(s) == 0:
+            fp.write(comment_str + line)
+        else:
+            fp.write(line)
+    fp.close()
+
+    # 修改回权限
+    os.chmod(f, mode)
