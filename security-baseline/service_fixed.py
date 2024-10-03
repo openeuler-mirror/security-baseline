@@ -321,3 +321,21 @@ class disable_ftp_anonymous_user(BaseFix): #禁止匿名账户登录ftp
             backup_file(Initial_dir,file)
             if show:
                 print('加固项',self.id,'操作文件已备份。')
+
+    def reset(self):
+        flag = 0
+        for file in self.path:
+            if reset_file(Initial_dir, file):
+                pass
+            else:
+                flag+=1
+        if flag>1:
+            self.recovery()
+
+    def recovery(self):
+        for p in self.path:
+            if os.path.exists(p+'.bak'):
+                cp_file(p+'.bak',p)
+
+    def check(self):#暂时不检验
+        return True
