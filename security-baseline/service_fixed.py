@@ -211,3 +211,23 @@ class CHECK_ICMP(BaseFix): #禁止响应ping，避免被扫描发现
         else:
             append_line('net.ipv4.icmp_echo_ignore_all = 1',self.path)
         run_shell('sysctl -p >/dev/null 2>&1',False)
+
+    def reset(self):
+        if reset_file(Initial_dir, self.path):
+            pass
+        else:
+            self.recovery()
+
+    def recovery(self):
+        remove_line('^net.ipv4.icmp_echo_ignore_all',self.path)
+        run_shell('sysctl -p >/dev/null 2>&1',False)
+
+    def check(self):
+        Sysctl = grep_find('^net.ipv4.icmp_echo_ignore_all', self.path)
+        if Sysctl==[]:
+            return False
+        else:
+            if '= 1' in Sysctl[-1] or '=1' in Sysctl[-1] or '=  1' in Sysctl[-1]:
+                return True
+            else:
+                return False
