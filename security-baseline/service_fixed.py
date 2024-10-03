@@ -353,3 +353,74 @@ class LOGIN_TMOUT(BaseFix): #设置登录无操作中断会话时间
                 flag=False
         return flag
 
+
+class SYSLOG(BaseFix): # 配置系统日志到路径
+    def __init__(self):
+        super().__init__()
+        self.id = 11
+        self.path="/etc/rsyslog.conf"
+        self.description='本地系统日志设定'
+
+    def run(self):
+    #remove_line('^*.err;kern.debug;daemon.notice',path)
+    #remove_line('^cron.*', path)
+    #remove_line("^authpriv.*",path)
+
+    #append_line('*.err;kern.debug;daemon.notice;        /var/log/messages',path)
+    #append_line('cron.*                                 /var/log/cron',path)
+    #append_line('authpriv.*                             /var/log/secure',path)
+        try:
+            sed_repalce(grep_find('^*.err;kern.debug;daemon.notice', self.path)[0], '*.err;kern.debug;daemon.notice;        /var/log/messages', self.path)
+        except:
+            append_line('*.err;kern.debug;daemon.notice;        /var/log/messages', self.path)
+        try:
+            sed_repalce(grep_find('^cron.*', self.path)[0],'cron.*                                 /var/log/cron', self.path)
+        except:
+            append_line('cron.*                                 /var/log/cron', self.path)
+        try:
+            sed_repalce(grep_find('^authpriv.*', self.path)[0], 'authpriv.*                             /var/log/secure', self.path)
+        except:
+            append_line('authpriv.*                             /var/log/secure', self.path)
+        run_shell('systemctl restart rsyslog')
+
+    def recovery(self):
+        remove_line('^*.err;kern.debug;daemon.notice',self.path)
+        remove_line('^cron.*', self.path)
+        remove_line("^authpriv.*",self.path)
+        run_shell('systemctl restart rsyslog') #生效设置
+
+    def check(self):
+        log1=grep_find('^*.err;kern.debug;daemon.notice', self.path)
+        log2=grep_find('^cron.*', self.path)
+        log3=grep_find('^authpriv.*',self.path)
+        if log1==[] or log2==[] or log3==[]:
+            return False
+        if log1!=[] and '/var/log/messages' not in log1[0]:
+            return False
+        if log2!=[] and '/var/log/cron' not in log2[0]:
+            return False
+        if log3!=[] and '/var/log/secure' not in log3[0]:
+            return False
+        return True
+
+
+class RSYSLOG(BaseFix): #设置远程log的存放
+    def __init__(self):
+        super().__init__()
+        self.id = 12
+        self.path='/etc/rsyslog.conf'
+        self.description='远程日志设定'
+
+    def run(self):
+        remove_line('@192.168.0.1',self.path)
+        append_line("*.*    @192.168.0.1",self.path)
+        run_shell('systemctl restart rsyslog')
+
+    def recovery(self):
+        remove_line('@192.168.0.1',self.path)
+        run_shell('systemctl restart rsyslog')
+
+    def check(self): #直接加固即可
+        self.run()
+        return True
+
