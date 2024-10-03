@@ -17,7 +17,6 @@ def run(items,config):
     mode=config.mode
     fix_things=config.fixed_things
     force=config.force_backup
-    print(34566666,force)
     backup_path=config.backup_path
     if mode=='fix':
         print('执行系统加固')
