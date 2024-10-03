@@ -15,22 +15,22 @@ class BaseFix():
     def run(self):
         pass
 
-    def backup(self,show=True):  # 对操作文件进行备份
+    def backup(self,show=True,force=False,backup_path=Initial_dir):  # 对操作文件进行备份
         if self.path!='' and os.path.exists(self.path):
-            backup_file(Initial_dir, self.path)
+            backup_file(backup_path, self.path,force)
             if show:
                 print('加固项',self.id,'操作文件已备份。')
         else:
             if show:
                 print('加固项',self.id,'无需备份！')
 
-    def reset(self):
+    def reset(self,backup_path=Initial_dir):
         if self.path=='' or reset_file(Initial_dir, self.path):
             pass
         else:
             self.recovery()
 
-    def recovery(self):
+    def recovery(self,backup_path=Initial_dir):
         pass
 
     def check(self):
@@ -38,7 +38,7 @@ class BaseFix():
 
 
 def split_file_by_line(file,sym,condi,condi_order,out_order): #(`awk -F ":" '( $2 == "" ) { print $1 }' /etc/shadow`)
-    #按行检索文档，并以sym作为分割，返回第order个分割结果等于condi的所有结果
+    #按行检索文档,并以sym作为分割,返回第order个分割结果等于condi的所有结果
     result=[]
     with open(file,'r') as f:
         lines=f.readlines()
@@ -66,18 +66,29 @@ def remove_line(line,file): #删除文件中有特定内容中的行
     run_shell(command)
 
 def cp_file(raw_path,new_path,show=True):
-    command=r'cp -a '+raw_path+' '+new_path
+    command=r'cp -a '+raw_path+' '+new_path +' &> /dev/null'
     run_shell(command,show)
 
 def rm_file(raw_path,show=True):
-    command = r'rm -f ' + raw_path
+    command = r'rm -f ' + raw_path+' &> /dev/null'
     run_shell(command,show)
 
-def backup_file(Initial_dir,file):
+def backup_file(Initial_dir,file,force=False):
     if not os.path.exists(Initial_dir):
         os.mkdir(Initial_dir)
     if not os.path.exists(os.path.join(Initial_dir, file.split('/')[-1] + '_initialbak')) and os.path.exists(file):
         cp_file(file, os.path.join(Initial_dir, file.split('/')[-1] + '_initialbak'))
+    else:
+        # 强制覆盖配置滚动保存，确保可回溯
+        if force==True:
+            if os.path.exists(os.path.join(Initial_dir, file.split('/')[-1] + '_initialbak')):
+                for i in range(10):
+                    if not os.path.exists(os.path.join(Initial_dir, file.split('/')[-1] + '_initialbak.'+str(i))):
+                        cp_file(os.path.join(Initial_dir, file.split('/')[-1] + '_initialbak'),os.path.join(Initial_dir, file.split('/')[-1] + '_initialbak.'+str(i)))
+                        break
+            cp_file(file, os.path.join(Initial_dir, file.split('/')[-1] + '_initialbak'))
+
+    
 
 def reset_file(Initial_dir,file):
     if os.path.exists(os.path.join(Initial_dir, file.split('/')[-1] + '_initialbak')):
@@ -92,7 +103,7 @@ def print_config(config):
     for c in vars(config):
         value=getattr(config, c)
         if type(value)==type([]):
-            description=u'操作内容，空表示所有'
+            description=u'操作内容,空表示所有'
             table.add_row([c, value, description])
         else:
             if c in descriptions.keys():
@@ -134,7 +145,7 @@ def cprint(string,color):
 
 
 def replace_line(f, s, new_line):
-    # 检查目标文件不存在，则不做处理
+    # 检查目标文件不存在,则不做处理
     if not os.path.exists(f):
         return
 
@@ -149,13 +160,13 @@ def replace_line(f, s, new_line):
     os.chmod(f, 0o755)
 
     # 读取文件
-    fp = open(f, "rb")
+    fp = open(f, "r")
     lines = fp.readlines()
     fp.close()
 
     # 修改并写入文件
     is_find = False
-    fp = open(f, "wb")
+    fp = open(f, "w")
     for line in lines:
         if line.find(s) == 0:
             is_find = True
@@ -169,7 +180,6 @@ def replace_line(f, s, new_line):
     # 修改回权限
     os.chmod(f, mode)
 
-
 def comment_out_line(f, s, comment_str):
     # 检查目标文件不存在，则不做处理
     if not os.path.exists(f):
@@ -182,12 +192,12 @@ def comment_out_line(f, s, comment_str):
     os.chmod(f, 0o755)
 
     # 读取文件
-    fp = open(f, "rb")
+    fp = open(f, "r")
     lines = fp.readlines()
     fp.close()
 
     # 修改并写入文件
-    fp = open(f, "wb")
+    fp = open(f, "w")
     for line in lines:
         if line.find(s) == 0:
             fp.write(comment_str + line)
@@ -197,3 +207,16 @@ def comment_out_line(f, s, comment_str):
 
     # 修改回权限
     os.chmod(f, mode)
+
+
+
+def check_file_permission(file_path,mode_code='644'):
+    # 获取文件的权限
+    file_stat = os.stat(file_path)
+    # 提取权限部分
+    file_permission = oct(file_stat.st_mode)[-3:]
+    # 检查是否为644
+    if file_permission == mode_code:
+        return True
+    else:
+        return False
