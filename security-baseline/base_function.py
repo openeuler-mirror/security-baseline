@@ -227,8 +227,6 @@ def comment_out_line(f, s, comment_str):
     # 修改回权限
     os.chmod(f, mode)
 
-
-
 def check_file_permission(file_path,mode_code='644'):
     # 获取文件的权限
     file_stat = os.stat(file_path)

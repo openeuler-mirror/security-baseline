@@ -17,6 +17,7 @@ def run(items,config):
     mode=config.mode
     fix_things=config.fixed_things
     force=config.force_backup
+    print(34566666,force)
     backup_path=config.backup_path
     if mode=='fix':
         print('执行系统加固')
@@ -67,13 +68,11 @@ def run(items,config):
         print_desc(fixed_items)
        #只显示加固项内容
 
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='系统加固检测工具,请输入需要执行的操作和操作内容')
     parser.add_argument('--mode', dest='mode', type=str, help='设定工具运行模式: 执行系统加固(fix),加固状态检测(check),修复(recovery)和加固文件备份(backup)', default='check')
     parser.add_argument('--opt', dest='fixed_things', nargs='+', type=int, help='加固或者修复的数据项', default=[])
-    parser.add_argument('--force', dest='force_backup', action="store_true", help='强制备份设置项', default=True)
+    parser.add_argument('--force', dest='force_backup', action="store_true", help='强制备份设置项', default=False)
     parser.add_argument('--backup_path', dest='backup_path', type=str, help='用于设置备份的路径', default="/etc/._initialbak/")
     parser.add_argument('--version', '-V',dest='need_version',action="store_true", help='版本号查询', default=False)
 
