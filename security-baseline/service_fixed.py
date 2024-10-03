@@ -321,3 +321,35 @@ class CHECK_ROOTDIR(BaseFix): #检查rootdir相关权限
     def check(self):
         self.run()
         return True
+
+
+class LOGIN_TMOUT(BaseFix): #设置登录无操作中断会话时间
+    def __init__(self):
+        super().__init__()
+        self.id = 10
+        self.path='/etc/profile'
+        self.description='用户会话无操作时长中断设定'
+
+    def run(self):
+        remove_line('^TMOUT',self.path) #删除TMOUT开头的行
+        remove_line('^export TMOUT', self.path) #删除export TMOUT开头的行
+        append_line("export TMOUT=300",self.path) #在尾部追加行
+        run_shell('source '+self.path) #使修改生效
+
+    def recovery(self):
+        remove_line('^TMOUT', self.path)  # 删除TMOUT开头的行
+        remove_line('^export TMOUT', self.path)  # 删除export TMOUT开头的行
+        run_shell('source '+self.path) #生效修改
+
+    def check(self):
+        tmouts=grep_find('TMOUT=',self.path)
+        flag=False
+        for tmout in tmouts:
+            if tmout[0]=='#':
+                continue
+            if '300' in tmout and '3000' not in tmout:
+                flag=True
+            else:
+                flag=False
+        return flag
+
