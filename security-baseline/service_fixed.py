@@ -293,3 +293,31 @@ class del_banner(BaseFix): #会话界面的提醒字符段备份并删除，防�
             if os.path.exists(file):
                 return False
         return True
+
+
+class disable_ftp_anonymous_user(BaseFix): #禁止匿名账户登录ftp
+    def __init__(self):
+        super().__init__()
+        self.id=28
+        self.path=["/etc/passwd","/etc/vsftpd.conf","/etc/vsftpd/vsftpd.conf"]
+        self.description='禁止匿名账户登录ftp'
+
+    def run(self):
+        for path in self.path:
+            if 'passwd' in path:
+                try:
+                    comment_out_line(path, "ftp:x", "#")
+                except:
+                    pass
+            else:
+                try:
+                    replace_line(path, "anonymous_enabl", "anonymous_enable=NO")
+                    replace_line(path, "root", "root") #确保root可使用不能使用
+                except:
+                    pass
+
+    def backup(self,show): #对操作文件进行备份
+        for file in self.path:
+            backup_file(Initial_dir,file)
+            if show:
+                print('加固项',self.id,'操作文件已备份。')
