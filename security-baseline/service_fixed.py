@@ -300,3 +300,24 @@ class CHECK_USER_FILE(BaseFix): #修改与账户信息相关的文件权限，�
     def check(self):
         self.run()
         return True
+
+
+class CHECK_ROOTDIR(BaseFix): #检查rootdir相关权限
+    def __init__(self):
+        super().__init__()
+        self.id = 9
+        self.description='rootdir权限设定'
+
+    def run(self):
+        commands=['chown root:root /root','chmod 700 /root'] #修复/root目录的归属，设置/root目录权限到root可用
+        for command in commands:
+            run_shell(command)
+
+    def recovery(self):
+        commands = ['chown root:root /root', 'chmod 550 /root']
+        for command in commands:
+            run_shell(command)
+
+    def check(self):
+        self.run()
+        return True
