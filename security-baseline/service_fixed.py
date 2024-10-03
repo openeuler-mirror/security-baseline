@@ -90,3 +90,37 @@ class ROOT_LOGIN(BaseFix): #限制root用户使用ssh登录
                 return False
             else:
                 return True
+
+
+class SSH_PORT(BaseFix): #ssh端口修改为非22号端口
+    def __init__(self):
+        super().__init__()
+        self.id = 23
+        self.path='/etc/ssh/sshd_config'
+        self.description='openssh端口修改为非22号端口'
+
+    def run(self):
+        command="setenforce 0 && sed -i 's#^SELINUX=enforcing#SELINUX=disabled#g' /etc/selinux/config"
+        run_shell(command)
+        command='rpm -qa iptables*|wc -l'
+        config=fixed_config()
+        New_port=config.New_Port
+        if int(run_shell(command,False)[0])>0:
+            command='iptables -I INPUT  -p tcp -m state --state NEW -m tcp --dport '+New_port.split(' ')[-1]+ ' -j ACCEPT && service iptables save'
+            run_shell(command)
+        Old_Port_Num=int(run_shell("grep '^Port ' "+self.path+" 2>/dev/null|wc -l",False)[0])
+        if Old_Port_Num==1:
+            Old_Port = grep_find('^Port',self.path)
+            sed_repalce(Old_Port[0],New_port,self.path)
+        elif Old_Port_Num>1:
+            Old_Port = grep_find('^Port', self.path)
+            flag=0
+            for Port in Old_Port:
+                if flag==0:
+                    sed_repalce(Port, New_port, self.path)
+                    flag=1
+                else:
+                    remove_line(Port,self.path)
+        else:
+            append_line(New_port,self.path)
+        run_shell('systemctl restart sshd')   #重启ssh服务确保修改生效
