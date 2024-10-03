@@ -112,3 +112,80 @@ class CHECK_UID_ZERO(BaseFix): #检测UID权限为0的账户，并删除
                 if ZeroUser != 'root':
                     print('存在非root账户管理员: ',ZeroUser)
         return flag
+
+
+class REBUILD_FILE(BaseFix): #修改密码相关限制，1.密码最长有效天数，2.密码最小长度，3.密码最短有效期，4.密码有效期结束前七天提醒修改
+    def __init__(self):
+        super().__init__()
+        self.id = 4
+        self.path='/etc/login.defs'
+        self.description='用户密码长度和有效期相关设定'
+
+    def run(self):
+        if grep_find('^PASS_MAX_DAYS', self.path)!=[]:
+            sed_repalce(grep_find('^PASS_MAX_DAYS', self.path)[0], 'PASS_MAX_DAYS	90', self.path)
+        else:
+            append_line('PASS_MAX_DAYS	90', self.path)
+        if grep_find('^PASS_MIN_LEN', self.path)!=[]:
+            sed_repalce(grep_find('^PASS_MIN_LEN', self.path)[0], 'PASS_MIN_LEN	   8', self.path)
+        else:
+            append_line('PASS_MIN_LEN	   8', self.path)
+        if grep_find('^PASS_MIN_DAYS', self.path)!=[]:
+            sed_repalce(grep_find('^PASS_MIN_DAYS', self.path)[0], 'PASS_MIN_DAYS	1', self.path)
+        else:
+            append_line('PASS_MIN_DAYS	1',self.path)
+        if grep_find('^PASS_WARN_AGE', self.path)!=[]:
+            sed_repalce(grep_find('^PASS_WARN_AGE', self.path)[0], 'PASS_WARN_AGE	7', self.path)
+        else:
+            append_line('PASS_WARN_AGE	7',self.path)
+
+    def reset(self):
+        if reset_file(Initial_dir, self.path):
+            pass
+        else:
+            self.recovery()
+
+    def recovery(self):
+        if grep_find('^PASS_MAX_DAYS', self.path)!=[]:
+            sed_repalce(grep_find('^PASS_MAX_DAYS', self.path)[0], 'PASS_MAX_DAYS	99999', self.path)
+        else:
+            append_line('PASS_MAX_DAYS	99999', self.path)
+        if grep_find('^PASS_MIN_LEN', self.path)!=[]:
+            sed_repalce(grep_find('^PASS_MIN_LEN', self.path)[0], 'PASS_MIN_LEN	   8', self.path)
+        else:
+            append_line('PASS_MIN_LEN	   8', self.path)
+        if grep_find('^PASS_MIN_DAYS', self.path)!=[]:
+            sed_repalce(grep_find('^PASS_MIN_DAYS', self.path)[0], 'PASS_MIN_DAYS	0', self.path)
+        else:
+            append_line('PASS_MIN_DAYS	0',self.path)
+        if grep_find('^PASS_WARN_AGE', self.path)!=[]:
+            sed_repalce(grep_find('^PASS_WARN_AGE', self.path)[0], 'PASS_WARN_AGE	7', self.path)
+        else:
+            append_line('PASS_WARN_AGE	7',self.path)
+
+    def check(self):
+        flag=True
+        try:
+            PASS_MAX_DAYS=int(grep_find('^PASS_MAX_DAYS', self.path)[0].split('\t')[1])
+        except:
+            PASS_MAX_DAYS=99999
+        try:
+            PASS_MIN_LEN = int(grep_find('^PASS_MIN_LEN', self.path)[0].split('\t')[1])
+        except:
+            PASS_MIN_LEN=1
+        try:
+            PASS_MIN_DAYS = int(grep_find('^PASS_MIN_DAYS', self.path)[0].split('\t')[1])
+        except:
+            PASS_MIN_DAYS=0
+        try:
+            PASS_WARN_AGE = int(grep_find('^PASS_WARN_AGE', self.path)[0].split('\t')[1])
+        except:
+            PASS_WARN_AGE=7
+        print('密码有效期：',PASS_MAX_DAYS)
+        print('密码最短长度：', PASS_MIN_LEN)
+        print('密码最短修改频率：',PASS_MIN_DAYS)
+        print('密码过期提醒天数：', PASS_WARN_AGE)
+        if [PASS_MAX_DAYS,PASS_MIN_LEN,PASS_MIN_DAYS,PASS_WARN_AGE]!=[90,8,1,7]:
+            flag=False
+        return flag
+
