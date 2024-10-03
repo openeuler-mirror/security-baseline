@@ -124,3 +124,37 @@ class SSH_PORT(BaseFix): #ssh端口修改为非22号端口
         else:
             append_line(New_port,self.path)
         run_shell('systemctl restart sshd')   #重启ssh服务确保修改生效
+
+    def reset(self):
+        if reset_file(Initial_dir, self.path):
+            pass
+        else:
+            self.recovery()
+
+    def recovery(self):
+        command = "setenforce 0 && sed -i 's#^SELINUX=enforcing#SELINUX=disabled#g' /etc/selinux/config"
+        run_shell(command)
+        Raw_port="Port 22"
+        Old_Port_Num = int(run_shell("grep '^Port ' " + self.path + " 2>/dev/null|wc -l", False)[0])
+        if Old_Port_Num == 1:
+            Old_Port = grep_find('^Port', self.path)
+            sed_repalce(Old_Port[0], Raw_port, self.path)
+        elif Old_Port_Num > 1:
+            Old_Port = grep_find('^Port', self.path)
+            flag = 0
+            for Port in Old_Port:
+                if flag == 0:
+                    sed_repalce(Port, Raw_port, self.path)
+                    flag = 1
+                else:
+                    remove_line(Port, self.path)
+        run_shell('systemctl restart sshd')  # 重启ssh服务确保修改生效
+
+    def check(self):
+        flags=grep_find('^Port',self.path)
+        if flags==[]:
+            return False
+        if '10000' in flags[-1]:
+            return True
+        else:
+            return False
