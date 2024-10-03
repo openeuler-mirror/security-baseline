@@ -39,3 +39,44 @@ class CHECK_EMPTY_PASS(BaseFix):
             for Empty_User in Empty_Users:
                 print('存在密码为空账户: ',Empty_User)
         return flag
+
+
+class LOCKING_INVAILD_USER(BaseFix): #锁定无效账号
+    def __init__(self):
+        super().__init__()
+        self.id = 2
+        self.config = fixed_config()
+        self.description='无效账户锁定'
+
+    def run(self):
+        Lock_users = self.config.Lock_users
+        for Lock_user in Lock_users:
+            command = 'id ' + Lock_user + ' 2>/dev/null | wc -l'
+            num = run_shell(command,False)[0]
+            if num == '1' or num == 1:
+                
+                command = 'passwd -l ' + Lock_user + ' &>/dev/null'
+                run_shell(command,False)
+
+    def recovery(self):  #对锁定的账户予以解封
+        Lock_users = self.config.Lock_users
+        for Lock_user in Lock_users:
+            command = 'id ' + Lock_user + ' 2>/dev/null | wc -l'
+            num = run_shell(command,False)[0]
+            if num == '1' or num == 1:
+                command = 'passwd -u ' + Lock_user + ' &>/dev/null'
+                run_shell(command,False)
+
+    def check(self):
+        Lock_users = self.config.Lock_users
+        flag=True
+        for Lock_user in Lock_users:
+            command = 'passwd -S ' + Lock_user + ' 2>/dev/null'
+            num = run_shell(command,False)
+
+            if num != []:
+                num=num[0].split(' ')[1]
+                if num!='LK':
+                    return False
+        return flag
+
