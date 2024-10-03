@@ -80,3 +80,35 @@ class LOCKING_INVAILD_USER(BaseFix): #锁定无效账号
                     return False
         return flag
 
+
+class CHECK_UID_ZERO(BaseFix): #检测UID权限为0的账户，并删除
+    def __init__(self):
+        super().__init__()
+        self.id = 3
+        self.path='/etc/passwd'
+        self.description='UID权限为0的非root账户处置'
+
+    def run(self):
+        UidZeroUser =split_file_by_line('/etc/passwd',":",'0',2,0)
+
+        if len(UidZeroUser)!=1 and UidZeroUser!=['root']:
+            for ZeroUser in UidZeroUser:
+                if ZeroUser != 'root':
+                    command='userdel -fr '+ZeroUser +' 2>/dev/null'
+                    run_shell(command,False)
+
+    def reset(self):
+        if reset_file(Initial_dir, self.path):
+            pass
+        else:
+            self.recovery()
+
+    def check(self):
+        UidZeroUser = split_file_by_line('/etc/passwd', ":", '0', 2, 0)
+        flag=True
+        if len(UidZeroUser) != 1 and UidZeroUser != ['root']:
+            flag=False
+            for ZeroUser in UidZeroUser:
+                if ZeroUser != 'root':
+                    print('存在非root账户管理员: ',ZeroUser)
+        return flag
