@@ -10,8 +10,6 @@ import subprocess
 import os
 
 #input: run_shell(command,True/False) #单条shell指令,是否显示输出结果
-
-
 def run_shell(do,show_state=True):
     result=os.popen(do)
     output=[]

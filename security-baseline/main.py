@@ -10,6 +10,7 @@
 import argparse
 from mapping import catch_items
 from base_function import print_config,print_desc,print_line,cprint
+import time
 
 
 
@@ -22,6 +23,24 @@ def run(items,config):
     fix_things=config.fixed_things
     force=config.force_backup
     backup_path=config.backup_path
+    daemon=config.daemon
+    interval=config.interval
+    if daemon:
+        while True:
+            print('开启系统加固守护模式')
+            print_line()
+            for key in items.keys():
+                if fix_things == [] or key in fix_things:
+                    print_line()
+                    print('检测加固项,编号',key,',名称：',items[key][0].description)
+                    print_line(False)
+                    if items[key][0].check():
+                        print("加固项不满足，执行加固。")
+                        items[key][0].run()
+                    else:
+                        print("满足加固要求。")
+                time.sleep(5)
+            time.sleep(interval)
     if mode=='fix':
         print('执行系统加固')
         print_line()
@@ -78,6 +97,8 @@ if __name__ == '__main__':
     parser.add_argument('--force', dest='force_backup', action="store_true", help='强制备份设置项', default=False)
     parser.add_argument('--backup_path', dest='backup_path', type=str, help='用于设置备份的路径', default="/etc/._initialbak/")
     parser.add_argument('--version', '-V',dest='need_version',action="store_true", help='版本号查询', default=False)
+    parser.add_argument('--daemon', '-D',dest='daemon',action="store_true", help='守护进程模式', default=False)
+    parser.add_argument('--interval',dest='interval',type=int, help='守护进程检测加固时间间隔', default=3600)
 
     config=parser.parse_args()
     fixed_items= catch_items()
