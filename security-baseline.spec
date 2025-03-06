@@ -56,6 +56,9 @@ fi
 %post
 
 %changelog
+* Thu Mar 06 2025 wuksh <wuksh@chinatelecom.com> - 0.1.1-9
+- origin the code and add the daemon mode.
+
 * Mon Mar 20 2023 wuksh <wuksh@chinatelecom.com> - 0.1.1-8
 - update 0.1 version
 
